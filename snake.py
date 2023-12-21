@@ -1,5 +1,7 @@
 import random
 import time
+from curses import wrapper
+from curses import window
 
 class Snake:
     """
@@ -212,9 +214,9 @@ class World:
         """
 
         if self.snake.segments[0][0] == -1: # if the snake just turned,
-            for i in range(2):  # then create the new head, and now the next
-                                # statement shifts the old one as well
-                self.snake.segments[i][0] += 1
+            # then create the new head, and now the next
+            # statement shifts the old one as well
+            self.snake.segments[0][0] += 1
         else:   # shift all of the segments but the head
             for i in range(1, len(self.snake.segments)):
                 self.snake.segments[i][0] += 1
@@ -257,8 +259,16 @@ class World:
         }
         food_eaten = 0
         while not self.loss():  # Maybe change to while True (other check)
-            print(self)
-            time.sleep(0.5)
+            # print(self)
+            global screen
+            screen.clear()
+            screen.addstr(str(self))
+            # make sure the key waits for interval
+            key = screen.getkey()
+            if key in ('w', 'a', 's', 'd'):
+                direction = key_to_direction[key]
+                if direction != self.snake.segments[0][1]:
+                    self.snake.turn(direction)
             self.step()
             if self.loss(): break
             if self.onFood():
@@ -274,5 +284,15 @@ class World:
         print("Your final length:", self.snake.length)
         print("Food Eaten:", food_eaten)
 
+def main(scr: window):
+    global s
+    global w
+    global screen
+    screen = scr
+    w.run()
+
 s = Snake(3)
 w = World(s)
+
+screen = 1
+wrapper(main)
