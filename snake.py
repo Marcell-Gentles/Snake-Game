@@ -2,6 +2,7 @@ import random
 import time
 from curses import wrapper
 from curses import window
+import curses
 
 class Snake:
     """
@@ -217,9 +218,11 @@ class World:
             # then create the new head, and now the next
             # statement shifts the old one as well
             self.snake.segments[0][0] += 1
-        else:   # shift all of the segments but the head
-            for i in range(1, len(self.snake.segments)):
-                self.snake.segments[i][0] += 1
+        # shift all of the segments but the head
+        for i in range(1, len(self.snake.segments)):
+            self.snake.segments[i][0] += 1
+            if self.snake.segments[i][0] >= self.snake.length:
+                del self.snake.segments[i]
         # move the head in the direction it is facing
         move = self.matrix_moves[self.snake.segments[0][1]]
         self.pos[0] += move[0]; self.pos[1] += move[1]
@@ -244,13 +247,14 @@ class World:
             return True
         else: return False
 
-    def run(self, speed: float = 2.0):
+    def run(self, speed: float = 3.0):
         """
         Runs the snake game at the specified speed, the number of times per
         second the world steps
         """
-
+        global screen
         interval = 1 / speed    # period = frequency ** -1
+        curses.halfdelay(int(interval * 10))
         key_to_direction = {
             'w' : 'N',
             'a' : 'W',
@@ -260,11 +264,15 @@ class World:
         food_eaten = 0
         while not self.loss():  # Maybe change to while True (other check)
             # print(self)
-            global screen
             screen.clear()
             screen.addstr(str(self))
             # make sure the key waits for interval
-            key = screen.getkey()
+            # CURRENTLY SKIPPING REMAINDER OF INTERVAL AS SOON AS INPUT
+            # RECIEVED. CONSIDER USING TIMEIT TO SUBTRACT REMAINDER AND WAIT.
+            try:
+                key = screen.getkey()
+            except:
+                key = None
             if key in ('w', 'a', 's', 'd'):
                 direction = key_to_direction[key]
                 if direction != self.snake.segments[0][1]:
@@ -275,14 +283,16 @@ class World:
                 self.snake.grow()
                 food_eaten += 1
                 # remove the food that has just been eaten
-                self.data[self.pos[0]][self.pos[1]] = ' '
                 # Make sure not to place the new food on the cell it was
                 # just eaten from
                 while self.onFood():
+                    self.data[self.pos[0]][self.pos[1]] = ' '
                     self.placeFood()
-        print("Game Over")
-        print("Your final length:", self.snake.length)
-        print("Food Eaten:", food_eaten)
+        # the game over screen does not yet display
+        screen.clear()
+        screen.addstr("Game Over\nYour final length : " \
+                      + str(self.snake.length) + "\nFood Eaten : " \
+                        + str(food_eaten))
 
 def main(scr: window):
     global s
