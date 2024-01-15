@@ -3,6 +3,7 @@ import time
 from curses import wrapper
 from curses import window
 import curses
+from datetime import datetime
 
 class Snake:
     """
@@ -267,10 +268,12 @@ class World:
             screen.clear()
             screen.addstr(str(self))
             # make sure the key waits for interval
-            # CURRENTLY SKIPPING REMAINDER OF INTERVAL AS SOON AS INPUT
-            # RECIEVED. CONSIDER USING TIMEIT TO SUBTRACT REMAINDER AND WAIT.
             try:
+                time_before = datetime.now()
                 key = screen.getkey()
+                time_after = datetime.now()
+                duration = time_after - time_before
+                time.sleep(interval - duration.seconds)
             except:
                 key = None
             if key in ('w', 'a', 's', 'd'):
@@ -288,11 +291,13 @@ class World:
                 while self.onFood():
                     self.data[self.pos[0]][self.pos[1]] = ' '
                     self.placeFood()
-        # the game over screen does not yet display
+        # display the game over screen
         screen.clear()
         screen.addstr("Game Over\nYour final length : " \
                       + str(self.snake.length) + "\nFood Eaten : " \
                         + str(food_eaten))
+        screen.refresh()
+        time.sleep(5)
 
 def main(scr: window):
     global s
